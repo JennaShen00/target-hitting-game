@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Target Hit Experiment</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ==================================================
+           GLOBAL & CSS VARIABLES
+           ================================================== */
+        :root {
+            /* Data URIs for a custom arrow cursor */
+            --cursor-arrow: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M4 4 L28 12 L18 18 L12 28 Z" fill="%23222" stroke="white" stroke-width="2"/></svg>') 4 4, crosshair;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            overflow: hidden; /* Prevent scrolling during the task */
+            cursor: var(--cursor-arrow);
+        }
+
+        /* Screen containers */
+        .screen {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* ==================================================
+           WELCOME & RESULTS SCREENS
+           ================================================== */
+        #welcome-screen, #results-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            background: #ffffff;
+            overflow-y: auto; /* Allow scroll on results if needed */
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Results specific container to allow a wider layout for the chart */
+        #results-screen .container {
+            max-width: 800px;
+            margin: 40px 0;
+        }
+
+        h1 { margin-top: 0; color: #2c3e50; }
+        p { line-height: 1.6; font-size: 1.1rem; }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 20px 0;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: #2980b9; }
+
+        /* ==================================================
+           RESULTS DASHBOARD UI
+           ================================================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+            display: none; /* Hidden until loaded */
+        }
+
+        .stat-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            display: block;
+            margin-top: 5px;
+        }
+
+        #chart-wrapper {
+            position: relative;
+            height: 350px;
+            width: 100%;
+            margin-top: 30px;
+            display: none; /* Hidden until loaded */
+        }
+
+        .loading-spinner {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+            margin-top: 20px;
+        }
+
+        /* ==================================================
+           TASK SCREEN UI
+           ================================================== */
+        #task-screen { background-color: #eceff1; }
+
+        #start-hold-btn {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            user-select: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transform: translate(-50%, -50%); 
+            z-index: 10;
+        }
+
+        .target {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: radial-gradient(circle, 
+                #f1c40f 0%, #f1c40f 15%, 
+                #e74c3c 15%, #e74c3c 35%, 
+                #3498db 35%, #3498db 55%, 
+                #2c3e50 55%, #2c3e50 75%, 
+                #ecf0f1 75%, #ecf0f1 95%,
+                #bdc3c7 95%, #bdc3c7 100%);
+            transform: translate(-50%, -50%);
+            display: none;
+            z-index: 5;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        #feedback {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            pointer-events: none;
+            display: none;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="welcome-screen" class="screen" style="display: flex;">
+        <div class="container">
+            <h1>Target Hit Experiment</h1>
+            <p>Welcome! This is a target-hitting game. On each round, a button will appear in the center of the screen. <b>Press and hold</b> this center button. After a short delay, two archery targets will appear.</p>
+            <p>Your goal is to focus on hitting the <b>exact center</b> of one of the targets as accurately as possible. Take your time to be accurate.</p>
+            
+            <input type="text" id="participant-id" placeholder="Enter Participant ID (or leave blank to auto-generate)">
+            <button id="start-btn">Start Task</button>
+        </div>
+    </div>
+
+    <div id="task-screen" class="screen">
+        <div id="feedback">Bullseye!</div>
+        <div id="start-hold-btn">Hold Me</div>
+        <div id="target-left" class="target"></div>
+        <div id="target-right" class="target"></div>
+    </div>
+
+    <div id="results-screen" class="screen">
+        <div class="container">
+            <h1 id="final-message">Experiment Complete!</h1>
+            <p id="final-subtext">Calculating your results and fetching historical data...</p>
+            <div id="loading-indicator" class="loading-spinner">Processing... Please wait.</div>
+            
+            <div id="stats-grid" class="stats-grid">
+                <div class="stat-box">Mean Reaction Time <span class="stat-value" id="stat-rt">-- ms</span></div>
+                <div class="stat-box">Overall Accuracy <span class="stat-value" id="stat-acc">-- %</span></div>
+                <div class="stat-box">Left Choices <span class="stat-value" id="stat-left">-- %</span></div>
+                <div class="stat-box">Right Choices <span class="stat-value" id="stat-right">-- %</span></div>
+            </div>
+
+            <div id="chart-wrapper">
+                <canvas id="rtChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION & PLACEHOLDERS
+        // ==========================================
+        
+        // ------------------------------------------
+        // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
+        const GOOGLE_WEB_APP_URL = "YOUR_WEB_APP_URL_HERE";
+        // ------------------------------------------
+
+        const TOTAL_TRIALS = 90;
+        const HOLD_DURATION_MS = 500;
+        const HIT_RADIUS_PX = 115; 
+
+        const DISTANCE_MAP = { 0: 180, 1: 320, 2: 460 };
+        const SALIENCE_MAP = { 0: "blur(8px)", 1: "blur(3px)", 2: "blur(0px)" };
+
+        // Experiment State
+        let participantId = "";
+        let currentTrialIndex = 0;
+        let trialsData = [];
+        let trialList = []; 
+        let targetOnsetTime = 0;
+        let holdTimer = null;
+
+        // User Summary Variables
+        let userMeanRT = 0;
+
+        // DOM Elements
+        const welcomeScreen = document.getElementById("welcome-screen");
+        const taskScreen = document.getElementById("task-screen");
+        const resultsScreen = document.getElementById("results-screen");
+        const startBtn = document.getElementById("start-btn");
+        const partIdInput = document.getElementById("participant-id");
+        const holdBtn = document.getElementById("start-hold-btn");
+        const targetLeft = document.getElementById("target-left");
+        const targetRight = document.getElementById("target-right");
+        const feedbackEl = document.getElementById("feedback");
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+
+        startBtn.addEventListener("click", () => {
+            participantId = partIdInput.value.trim() || "P" + Math.random().toString(36).substring(2, 8).toUpperCase();
+            generateTrials();
+            welcomeScreen.style.display = "none";
+            taskScreen.style.display = "block";
+            setupTaskArea();
+            startTrial();
+        });
+
+        // ==========================================
+        // TRIAL GENERATION & LOGIC
+        // ==========================================
+
+        function generateTrials() {
+            let baseTrials = [];
+            // Balanced trials across 5 conditions
+            for(let i=0; i<9; i++) baseTrials.push({dL:0, dR:2, sL:2, sR:0}); 
+            for(let i=0; i<9; i++) baseTrials.push({dL:2, dR:0, sL:0, sR:2}); 
+            for(let i=0; i<9; i++) baseTrials.push({dL:0, dR:2, sL:0, sR:2}); 
+            for(let i=0; i<9; i++) baseTrials.push({dL:2, dR:0, sL:2, sR:0}); 
+            for(let i=0; i<18; i++) baseTrials.push({dL:1, dR:1, sL:1, sR:1});
+            for(let i=0; i<9; i++) baseTrials.push({dL:0, dR:2, sL:1, sR:1});
+            for(let i=0; i<9; i++) baseTrials.push({dL:2, dR:0, sL:1, sR:1});
+            for(let i=0; i<9; i++) baseTrials.push({dL:1, dR:1, sL:2, sR:0});
+            for(let i=0; i<9; i++) baseTrials.push({dL:1, dR:1, sL:0, sR:2});
+
+            trialList = baseTrials.sort(() => Math.random() - 0.5);
+        }
+
+        function computeConditionType(dL, dR, sL, sR) {
+            const leftDistBetter = dL < dR;
+            const rightDistBetter = dR < dL;
+            const leftSalBetter = sL > sR;
+            const rightSalBetter = sR > sL;
+
+            if (dL === dR && sL === sR) return 3; 
+            if (dL !== dR && sL === sR) return 4; 
+            if (dL === dR && sL !== sR) return 5; 
+            if ((leftDistBetter && leftSalBetter) || (rightDistBetter && rightSalBetter)) return 1; 
+            if ((leftDistBetter && rightSalBetter) || (rightDistBetter && leftSalBetter)) return 2; 
+            return 3; 
+        }
+
+        // ==========================================
+        // TASK EXECUTION
+        // ==========================================
+
+        function setupTaskArea() {
+            holdBtn.style.left = "50%";
+            holdBtn.style.top = "50%";
+            holdBtn.addEventListener("mousedown", handleHoldStart);
+            holdBtn.addEventListener("mouseup", handleHoldCancel);
+            holdBtn.addEventListener("mouseleave", handleHoldCancel);
+            targetLeft.addEventListener("mousedown", (e) => handleTargetClick(0, e, targetLeft));
+            targetRight.addEventListener("mousedown", (e) => handleTargetClick(1, e, targetRight));
+        }
+
+        function startTrial() {
+            if (currentTrialIndex >= TOTAL_TRIALS) {
+                endExperiment();
+                return;
+            }
+            targetLeft.style.display = "none";
+            targetRight.style.display = "none";
+            feedbackEl.style.display = "none";
+            holdBtn.style.display = "flex";
+            holdBtn.innerText = "Hold Me";
+            holdBtn.style.background = "#2c3e50";
+            // Important: Change cursor back to default crosshair/arrow during wait
+            document.body.style.cursor = "var(--cursor-arrow)"; 
+        }
+
+        function handleHoldStart() {
+            holdBtn.style.background = "#27ae60"; 
+            holdTimer = setTimeout(showTargets, HOLD_DURATION_MS);
+        }
+
+        function handleHoldCancel() {
+            if (holdTimer) {
+                clearTimeout(holdTimer);
+                holdTimer = null;
+                holdBtn.style.background = "#c0392b"; 
+                holdBtn.innerText = "Hold!";
+                setTimeout(() => { if(holdBtn.style.display !== "none") holdBtn.style.background = "#2c3e50"; }, 300);
+            }
+        }
+
+        function showTargets() {
+            holdBtn.style.display = "none";
+            
+            const trial = trialList[currentTrialIndex];
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+
+            const leftAngle = (180 + (Math.random() * 40 - 20)) * (Math.PI / 180);
+            const distLeftPx = DISTANCE_MAP[trial.dL];
+            targetLeft.style.left = `${centerX + distLeftPx * Math.cos(leftAngle)}px`;
+            targetLeft.style.top = `${centerY + distLeftPx * Math.sin(leftAngle)}px`;
+            targetLeft.style.filter = SALIENCE_MAP[trial.sL];
+            targetLeft.style.display = "block";
+
+            const rightAngle = (Math.random() * 40 - 20) * (Math.PI / 180);
+            const distRightPx = DISTANCE_MAP[trial.dR];
+            targetRight.style.left = `${centerX + distRightPx * Math.cos(rightAngle)}px`;
+            targetRight.style.top = `${centerY + distRightPx * Math.sin(rightAngle)}px`;
+            targetRight.style.filter = SALIENCE_MAP[trial.sR];
+            targetRight.style.display = "block";
+
+            targetOnsetTime = performance.now();
+        }
+
+        function handleTargetClick(choiceCode, event, targetEl) {
+            const clickTime = performance.now();
+            const reactionTime = Math.round(clickTime - targetOnsetTime);
+            const trial = trialList[currentTrialIndex];
+            
+            const rect = targetEl.getBoundingClientRect();
+            const targetCenterX = rect.left + rect.width / 2;
+            const targetCenterY = rect.top + rect.height / 2;
+            
+            const distanceFromCenter = Math.hypot(event.clientX - targetCenterX, event.clientY - targetCenterY);
+            const accuracy = distanceFromCenter <= HIT_RADIUS_PX ? 1 : 0;
+
+            trialsData.push({
+                Participant_ID: participantId,
+                Trial_Number: currentTrialIndex + 1,
+                Choice: choiceCode, 
+                Reaction_Time: reactionTime,
+                Accuracy: accuracy,
+                Distance_Left: trial.dL,
+                Distance_Right: trial.dR,
+                Salience_Left: trial.sL,
+                Salience_Right: trial.sR,
+                Condition_Type: computeConditionType(trial.dL, trial.dR, trial.sL, trial.sR)
+            });
+
+            targetLeft.style.display = "none";
+            targetRight.style.display = "none";
+            
+            feedbackEl.innerText = accuracy === 1 ? "Bullseye!" : "Almost there!";
+            feedbackEl.style.color = accuracy === 1 ? "#27ae60" : "#e67e22";
+            feedbackEl.style.display = "block";
+
+            currentTrialIndex++;
+            setTimeout(() => {
+                feedbackEl.style.display = "none";
+                startTrial();
+            }, 800); 
+        }
+
+        // ==========================================
+        // DATA SUBMISSION & DASHBOARD RENDERING
+        // ==========================================
+
+        async function endExperiment() {
+            // 1. Show results screen UI state
+            document.body.style.cursor = "default";
+            taskScreen.style.display = "none";
+            resultsScreen.style.display = "flex";
+            const loadingIndicator = document.getElementById("loading-indicator");
+
+            // 2. Calculate current participant's summary
+            calculateUserSummary();
+
+            if (GOOGLE_WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
+                document.getElementById("final-subtext").innerHTML = "Data not saved/fetched: <i>GOOGLE_WEB_APP_URL</i> was not configured.<br>Check console for your current data.";
+                loadingIndicator.style.display = "none";
+                document.getElementById("stats-grid").style.display = "grid";
+                console.log(JSON.stringify(trialsData, null, 2));
+                return;
+            }
+
+            try {
+                // 3. POST data to save
+                await fetch(GOOGLE_WEB_APP_URL, {
+                    method: "POST",
+                    body: JSON.stringify(trialsData)
+                });
+
+                document.getElementById("final-subtext").innerText = "Your data was saved. Fetching community statistics...";
+
+                // 4. GET historical data
+                const response = await fetch(GOOGLE_WEB_APP_URL);
+                const result = await response.json();
+
+                if(result.status === "success" && result.data && result.data.length > 0) {
+                    renderHistogram(result.data);
+                } else {
+                    throw new Error("No historical data found or empty response.");
+                }
+
+                document.getElementById("final-subtext").innerText = "Here is how you compare to overall history!";
+
+            } catch (error) {
+                console.error("Network/Fetch error:", error);
+                document.getElementById("final-subtext").innerText = "Your summary is below. (Could not load historical chart data).";
+            } finally {
+                // Hide loading, show stats and chart
+                loadingIndicator.style.display = "none";
+                document.getElementById("stats-grid").style.display = "grid";
+            }
+        }
+
+        function calculateUserSummary() {
+            const total = trialsData.length;
+            if (total === 0) return;
+
+            let sumRT = 0;
+            let sumAcc = 0;
+            let sumLeft = 0;
+            let sumRight = 0;
+
+            trialsData.forEach(t => {
+                sumRT += t.Reaction_Time;
+                sumAcc += t.Accuracy;
+                if(t.Choice === 0) sumLeft++;
+                if(t.Choice === 1) sumRight++;
+            });
+
+            userMeanRT = Math.round(sumRT / total);
+            const accPerc = Math.round((sumAcc / total) * 100);
+            const leftPerc = Math.round((sumLeft / total) * 100);
+            const rightPerc = Math.round((sumRight / total) * 100);
+
+            document.getElementById("stat-rt").innerText = `${userMeanRT} ms`;
+            document.getElementById("stat-acc").innerText = `${accPerc} %`;
+            document.getElementById("stat-left").innerText = `${leftPerc} %`;
+            document.getElementById("stat-right").innerText = `${rightPerc} %`;
+        }
+
+        function renderHistogram(historicalData) {
+            // Extract all numeric Reaction Times
+            const allRTs = historicalData
+                .map(row => Number(row.Reaction_Time))
+                .filter(rt => !isNaN(rt) && rt > 0);
+
+            if (allRTs.length === 0) return;
+
+            // Define bins (e.g., 50ms intervals)
+            const binSize = 50;
+            const minRT = Math.floor(Math.min(...allRTs) / binSize) * binSize;
+            // Cap visual max to 99th percentile to prevent extreme outliers skewing the chart
+            const sortedRTs = [...allRTs].sort((a,b) => a-b);
+            const p99 = sortedRTs[Math.floor(sortedRTs.length * 0.99)] || sortedRTs[sortedRTs.length-1];
+            let maxRT = Math.ceil(p99 / binSize) * binSize;
+            
+            // Ensure the user's mean RT fits on the chart
+            if (userMeanRT > maxRT) maxRT = Math.ceil(userMeanRT / binSize) * binSize;
+
+            const bins = [];
+            const labels = [];
+            
+            for (let i = minRT; i <= maxRT; i += binSize) {
+                bins.push(0);
+                labels.push(`${i}-${i+binSize}`);
+            }
+
+            // Populate frequencies
+            allRTs.forEach(rt => {
+                if (rt >= minRT && rt <= maxRT + binSize) { // include if within bounds
+                    let index = Math.floor((rt - minRT) / binSize);
+                    if (index >= bins.length) index = bins.length - 1;
+                    if (index < 0) index = 0;
+                    bins[index]++;
+                }
+            });
+
+            // Find which bin the current participant belongs to for highlighting
+            let userBinIndex = Math.floor((userMeanRT - minRT) / binSize);
+            if (userBinIndex < 0) userBinIndex = 0;
+            if (userBinIndex >= bins.length) userBinIndex = bins.length - 1;
+
+            // Colors: standard blue, but the user's bin is distinct red
+            const backgroundColors = bins.map((_, i) => 
+                i === userBinIndex ? 'rgba(231, 76, 60, 0.9)' : 'rgba(52, 152, 219, 0.6)'
+            );
+            const borderColors = bins.map((_, i) => 
+                i === userBinIndex ? 'rgba(192, 57, 43, 1)' : 'rgba(41, 128, 185, 1)'
+            );
+
+            // Show chart container
+            document.getElementById("chart-wrapper").style.display = "block";
+
+            // Render Chart
+            const ctx = document.getElementById('rtChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Historical Frequency',
+                        data: bins,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Reaction Time Distribution (Red bar indicates your mean performance)',
+                            font: { size: 16 }
+                        },
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = `Frequency: ${context.parsed.y}`;
+                                    if (context.dataIndex === userBinIndex) {
+                                        label += ' (Your Mean RT falls here)';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Reaction Time (ms)',
+                                font: { weight: 'bold' }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Frequency (Number of Trials)',
+                                font: { weight: 'bold' }
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
