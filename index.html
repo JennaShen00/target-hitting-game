@@ -229,10 +229,7 @@
         // CONFIGURATION & PLACEHOLDERS
         // ==========================================
         
-        // ------------------------------------------
-        // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
-        const GOOGLE_WEB_APP_URL = "YOUR_WEB_APP_URL_HERE";
-        // ------------------------------------------
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxRfWPZ7UBGUx24QJUbQlhVx9iUhEeJ9O6oXorThwvPKHO_K2kbiUvirIOXtszZEm9L/exec";
 
         const TOTAL_TRIALS = 90;
         const HOLD_DURATION_MS = 500;
@@ -431,8 +428,8 @@
             // 2. Calculate current participant's summary
             calculateUserSummary();
 
-            if (GOOGLE_WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
-                document.getElementById("final-subtext").innerHTML = "Data not saved/fetched: <i>GOOGLE_WEB_APP_URL</i> was not configured.<br>Check console for your current data.";
+            if (WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
+                document.getElementById("final-subtext").innerHTML = "Data not saved/fetched: <i>WEB_APP_URL</i> was not configured.<br>Check console for your current data.";
                 loadingIndicator.style.display = "none";
                 document.getElementById("stats-grid").style.display = "grid";
                 console.log(JSON.stringify(trialsData, null, 2));
@@ -441,7 +438,7 @@
 
             try {
                 // 3. POST data to save
-                await fetch(GOOGLE_WEB_APP_URL, {
+                await fetch(WEB_APP_URL, {
                     method: "POST",
                     body: JSON.stringify(trialsData)
                 });
@@ -449,7 +446,7 @@
                 document.getElementById("final-subtext").innerText = "Your data was saved. Fetching community statistics...";
 
                 // 4. GET historical data
-                const response = await fetch(GOOGLE_WEB_APP_URL);
+                const response = await fetch(WEB_APP_URL);
                 const result = await response.json();
 
                 if(result.status === "success" && result.data && result.data.length > 0) {
