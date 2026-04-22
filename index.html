@@ -487,14 +487,19 @@
             const setupTarget = (el, angleBase, distIdx, salIdx) => {
                 const angle = (angleBase + (Math.random() * 40 - 20)) * (Math.PI / 180);
                 const dist = DISTANCE_MAP[distIdx];
-                el.style.left = `${centerX + dist * Math.cos(angle)}px`;
-                el.style.top = `${centerY + dist * Math.sin(angle)}px`;
+                const x = centerX + dist * Math.cos(angle);
+                const y = centerY + dist * Math.sin(angle);
+                el.style.left = `${x}px`;
+                el.style.top = `${y}px`;
                 el.style.filter = SALIENCE_MAP[salIdx];
                 el.style.display = "block";
+                return { x, y };
             };
 
-            setupTarget(targetLeft, 180, trial.dL, trial.sL);
-            setupTarget(targetRight, 0, trial.dR, trial.sR);
+            const leftPos = setupTarget(targetLeft, 180, trial.dL, trial.sL);
+            const rightPos = setupTarget(targetRight, 0, trial.dR, trial.sR);
+            trial.leftPos = leftPos;
+            trial.rightPos = rightPos;
             targetOnsetTime = performance.now();
         }
 
@@ -528,7 +533,10 @@
                 Distance_Right: trial.dR,
                 Salience_Left: trial.sL,
                 Salience_Right: trial.sR,
-                Condition_Type: computeConditionType(trial.dL, trial.dR, trial.sL, trial.sR)
+                Condition_Type: computeConditionType(trial.dL, trial.dR, trial.sL, trial.sR),
+                Target_Location_Left: `${trial.leftPos.x},${trial.leftPos.y}`,
+                Target_Location_Right: `${trial.rightPos.x},${trial.rightPos.y}`,
+                Choice_Location: `${event.clientX},${event.clientY}`
             });
 
             targetLeft.style.display = "none";
