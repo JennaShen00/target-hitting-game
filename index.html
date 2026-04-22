@@ -264,23 +264,10 @@
     </div>
 
     <div id="results-screen" class="screen">
-        <div class="container">
-            <h1 id="final-message">Experiment Complete!</h1>
-            <p id="final-subtext">Calculating your results and fetching historical data...</p>
-            <div id="loading-indicator" class="loading-spinner">Processing... Please wait.</div>
-
-            <div id="stats-grid" class="stats-grid">
-                <div class="stat-box">Mean Reaction Time <span class="stat-value" id="stat-rt">-- ms</span></div>
-                <div class="stat-box">Overall Accuracy <span class="stat-value" id="stat-acc">-- %</span></div>
-                <div class="stat-box">Left Choices <span class="stat-value" id="stat-left">-- %</span></div>
-                <div class="stat-box">Right Choices <span class="stat-value" id="stat-right">-- %</span></div>
-            </div>
-
-            <div id="chart-wrapper">
-                <canvas id="rtChart"></canvas>
-            </div>
-        </div>
+    <div class="container">
+        <h1>Thank you for participating!</h1>
     </div>
+</div>
 
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw317u9uAYxix2av-AjaJ3xeELcLj6ta1VADtxeZwxnxGogF6W-nG9Mdar_QY8k14cq/exec";
@@ -572,34 +559,16 @@
             if ((dL < dR && sL > sR) || (dR < dL && sR > sL)) return 1;
             return 2;
         }
-
         async function endExperiment() {
             taskScreen.style.display = "none";
             resultsScreen.style.display = "flex";
-
-            calculateUserSummary();
-
             try {
                 await fetch(WEB_APP_URL, {
                     method: "POST",
                     body: JSON.stringify(trialsData)
                 });
-
-                document.getElementById("final-subtext").innerText = "Data saved. Fetching community statistics...";
-
-                const response = await fetch(WEB_APP_URL);
-                const result = await response.json();
-
-                if (result.status === "success" && result.data) {
-                    renderHistogram(result.data);
-                } else {
-                    throw new Error("No historical data found.");
-                }
             } catch (e) {
-                document.getElementById("final-subtext").innerText = "Summary displayed. (Cloud storage unavailable).";
-            } finally {
-                document.getElementById("loading-indicator").style.display = "none";
-                document.getElementById("stats-grid").style.display = "grid";
+                console.error("Cloud storage unavailable:", e);
             }
         }
 
