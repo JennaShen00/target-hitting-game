@@ -230,7 +230,7 @@
         
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxRfWPZ7UBGUx24QJUbQlhVx9iUhEeJ9O6oXorThwvPKHO_K2kbiUvirIOXtszZEm9L/exec";
 
-        const TOTAL_TRIALS = 90;
+        const TOTAL_TRIALS = 40;
         const HOLD_DURATION_MS = 500;
         const HIT_RADIUS_PX = 5; 
 
@@ -276,21 +276,56 @@
         // TRIAL GENERATION & LOGIC
         // ==========================================
 
-        function generateTrials() {
-            let baseTrials = [];
-            // Balanced trials across 5 conditions
-            for(let i=0; i<9; i++) baseTrials.push({dL:0, dR:2, sL:2, sR:0}); 
-            for(let i=0; i<9; i++) baseTrials.push({dL:2, dR:0, sL:0, sR:2}); 
-            for(let i=0; i<9; i++) baseTrials.push({dL:0, dR:2, sL:0, sR:2}); 
-            for(let i=0; i<9; i++) baseTrials.push({dL:2, dR:0, sL:2, sR:0}); 
-            for(let i=0; i<18; i++) baseTrials.push({dL:1, dR:1, sL:1, sR:1});
-            for(let i=0; i<9; i++) baseTrials.push({dL:0, dR:2, sL:1, sR:1});
-            for(let i=0; i<9; i++) baseTrials.push({dL:2, dR:0, sL:1, sR:1});
-            for(let i=0; i<9; i++) baseTrials.push({dL:1, dR:1, sL:2, sR:0});
-            for(let i=0; i<9; i++) baseTrials.push({dL:1, dR:1, sL:0, sR:2});
+       function generateTrials() {
+    let trials = [];
 
-            trialList = baseTrials.sort(() => Math.random() - 0.5);
-        }
+    const reps = 4; // number of repetitions per (condition × side)
+
+    // ==================================================
+    // Condition 1: Congruent (distance and salience favor same side)
+    // ==================================================
+    for (let i = 0; i < reps; i++) {
+        trials.push({ dL: 0, dR: 2, sL: 2, sR: 0 }); // left better
+        trials.push({ dL: 2, dR: 0, sL: 0, sR: 2 }); // right better
+    }
+
+    // ==================================================
+    // Condition 2: Incongruent (distance vs salience conflict)
+    // ==================================================
+    for (let i = 0; i < reps; i++) {
+        trials.push({ dL: 0, dR: 2, sL: 0, sR: 2 }); // left distance, right salience
+        trials.push({ dL: 2, dR: 0, sL: 2, sR: 0 }); // opposite
+    }
+
+    // ==================================================
+    // Condition 3: Equal (no difference between targets)
+    // Note: no left/right difference → total still 8 trials
+    // ==================================================
+    for (let i = 0; i < reps * 2; i++) {
+        trials.push({ dL: 1, dR: 1, sL: 1, sR: 1 });
+    }
+
+    // ==================================================
+    // Condition 4: Distance-only (distance differs, salience equal)
+    // ==================================================
+    for (let i = 0; i < reps; i++) {
+        trials.push({ dL: 0, dR: 2, sL: 1, sR: 1 }); // left closer
+        trials.push({ dL: 2, dR: 0, sL: 1, sR: 1 }); // right closer
+    }
+
+    // ==================================================
+    // Condition 5: Salience-only (salience differs, distance equal)
+    // ==================================================
+    for (let i = 0; i < reps; i++) {
+        trials.push({ dL: 1, dR: 1, sL: 2, sR: 0 }); // left more salient
+        trials.push({ dL: 1, dR: 1, sL: 0, sR: 2 }); // right more salient
+    }
+
+    // ==================================================
+    // Shuffle trials to randomize order
+    // ==================================================
+    trialList = trials.sort(() => Math.random() - 0.5);
+}
 
         function computeConditionType(dL, dR, sL, sR) {
             const leftDistBetter = dL < dR;
