@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Target Hit Experiment</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --cursor-arrow: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M4 4 L28 12 L18 18 L12 28 Z" fill="%23222" stroke="white" stroke-width="2"/></svg>') 4 4, crosshair;
@@ -264,10 +263,10 @@
     </div>
 
     <div id="results-screen" class="screen">
-    <div class="container">
-        <h1>Thank you for participating!</h1>
+        <div class="container">
+            <h1>Thank you for participating!</h1>
+        </div>
     </div>
-</div>
 
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw317u9uAYxix2av-AjaJ3xeELcLj6ta1VADtxeZwxnxGogF6W-nG9Mdar_QY8k14cq/exec";
@@ -289,7 +288,6 @@
         let trialList = [];
         let targetOnsetTime = 0;
         let holdTimer = null;
-        let userMeanRT = 0;
 
         const welcomeScreen = document.getElementById("welcome-screen");
         const taskScreen = document.getElementById("task-screen");
@@ -541,7 +539,7 @@
                 feedbackLabel = "Miss";
             }
             
-            trialFeedback.innerHTML = `${feedbackLabel}<br><strong>${err}px from center`;
+            trialFeedback.innerHTML = `${feedbackLabel}<br><strong>${err}px</strong> from center`;
             trialFeedback.style.display = "flex";
 
             currentTrialIndex++;
@@ -559,6 +557,7 @@
             if ((dL < dR && sL > sR) || (dR < dL && sR > sL)) return 1;
             return 2;
         }
+
         async function endExperiment() {
             taskScreen.style.display = "none";
             resultsScreen.style.display = "flex";
@@ -570,90 +569,6 @@
             } catch (e) {
                 console.error("Cloud storage unavailable:", e);
             }
-        }
-
-        function calculateUserSummary() {
-            const mainData = trialsData.filter(t => t.Is_Practice === "No");
-            const total = mainData.length;
-            if (total === 0) return;
-
-            let sumRT = 0, sumAcc = 0, sumLeft = 0, sumRight = 0;
-
-            mainData.forEach(t => {
-                sumRT += t.Reaction_Time;
-                sumAcc += t.Accuracy;
-                if (t.Choice === 0) sumLeft++;
-                if (t.Choice === 1) sumRight++;
-            });
-
-            userMeanRT = Math.round(sumRT / total);
-            document.getElementById("stat-rt").innerText = `${userMeanRT} ms`;
-            document.getElementById("stat-acc").innerText = `${Math.round((sumAcc / total) * 100)} %`;
-            document.getElementById("stat-left").innerText = `${Math.round((sumLeft / total) * 100)} %`;
-            document.getElementById("stat-right").innerText = `${Math.round((sumRight / total) * 100)} %`;
-        }
-
-        function renderHistogram(historicalData) {
-            const allRTs = historicalData
-                .map(row => Number(row.Reaction_Time))
-                .filter(rt => !isNaN(rt) && rt > 0);
-
-            if (allRTs.length === 0) return;
-
-            const binSize = 50;
-            const minRT = Math.floor(Math.min(...allRTs) / binSize) * binSize;
-            const sortedRTs = [...allRTs].sort((a, b) => a - b);
-            const p99 = sortedRTs[Math.floor(sortedRTs.length * 0.99)] || sortedRTs[sortedRTs.length - 1];
-            let maxRT = Math.ceil(Math.max(p99, userMeanRT) / binSize) * binSize;
-
-            const bins = [];
-            const labels = [];
-
-            for (let i = minRT; i <= maxRT; i += binSize) {
-                bins.push(0);
-                labels.push(`${i}-${i + binSize}`);
-            }
-
-            allRTs.forEach(rt => {
-                let idx = Math.floor((rt - minRT) / binSize);
-                if (idx >= 0 && idx < bins.length) bins[idx]++;
-            });
-
-            let userBinIndex = Math.floor((userMeanRT - minRT) / binSize);
-            if (userBinIndex < 0) userBinIndex = 0;
-            if (userBinIndex >= bins.length) userBinIndex = bins.length - 1;
-
-            const backgroundColors = bins.map((_, i) =>
-                i === userBinIndex ? 'rgba(231, 76, 60, 0.9)' : 'rgba(52, 152, 219, 0.6)'
-            );
-
-            document.getElementById("chart-wrapper").style.display = "block";
-
-            const ctx = document.getElementById('rtChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Frequency',
-                        data: bins,
-                        backgroundColor: backgroundColors
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Your Performance vs History'
-                        },
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
         }
     </script>
 </body>
