@@ -310,41 +310,74 @@
             startTrial();
         });
 
+        function shuffleArray(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
         function generateTrials() {
-            let mainTrials = [];
-            const reps = 4; // number of repetitions per (condition × side)
+            const reps = 4;
+
+            let otherUnits = [];
+            let pairUnits = [];
 
             // Condition 1: Congruent
             for (let i = 0; i < reps; i++) {
-                mainTrials.push({ dL: 0, dR: 2, sL: 2, sR: 0 }); // left better
-                mainTrials.push({ dL: 2, dR: 0, sL: 0, sR: 2 }); // right better
-            }
+                otherUnits.push([
+                    { dL: 0, dR: 2, sL: 2, sR: 0 }
+                ]); // left better
 
-            // Condition 2: Incongruent
-            for (let i = 0; i < reps; i++) {
-                mainTrials.push({ dL: 0, dR: 2, sL: 0, sR: 2 }); // left distance, right salience
-                mainTrials.push({ dL: 2, dR: 0, sL: 2, sR: 0 }); // opposite
-            }
-
-            // Condition 3: Equal
-            for (let i = 0; i < reps; i++) {
-                mainTrials.push({ dL: 1, dR: 1, sL: 1, sR: 1 });
-                mainTrials.push({ dL: 1, dR: 1, sL: 1, sR: 1 });
+                otherUnits.push([
+                    { dL: 2, dR: 0, sL: 0, sR: 2 }
+                ]); // right better
             }
 
             // Condition 4: Distance-only
             for (let i = 0; i < reps; i++) {
-                mainTrials.push({ dL: 0, dR: 2, sL: 1, sR: 1 }); // left closer
-                mainTrials.push({ dL: 2, dR: 0, sL: 1, sR: 1 }); // right closer
+                otherUnits.push([
+                    { dL: 0, dR: 2, sL: 1, sR: 1 }
+                ]); // left closer
+
+                otherUnits.push([
+                    { dL: 2, dR: 0, sL: 1, sR: 1 }
+                ]); // right closer
             }
 
             // Condition 5: Salience-only
             for (let i = 0; i < reps; i++) {
-                mainTrials.push({ dL: 1, dR: 1, sL: 2, sR: 0 }); // left more salient
-                mainTrials.push({ dL: 1, dR: 1, sL: 0, sR: 2 }); // right more salient
+                otherUnits.push([
+                    { dL: 1, dR: 1, sL: 2, sR: 0 }
+                ]); // left more salient
+
+                otherUnits.push([
+                    { dL: 1, dR: 1, sL: 0, sR: 2 }
+                ]); // right more salient
             }
 
-            mainTrials = mainTrials.sort(() => Math.random() - 0.5);
+            // Condition 2 paired with Condition 3
+            // 3 always immediately follows 2
+            for (let i = 0; i < reps; i++) {
+                pairUnits.push([
+                    { dL: 0, dR: 2, sL: 0, sR: 2 }, // Condition 2
+                    { dL: 1, dR: 1, sL: 1, sR: 1 }  // Condition 3
+                ]);
+
+                pairUnits.push([
+                    { dL: 2, dR: 0, sL: 2, sR: 0 }, // Condition 2
+                    { dL: 1, dR: 1, sL: 1, sR: 1 }  // Condition 3
+                ]);
+            }
+
+            otherUnits = shuffleArray(otherUnits);
+            pairUnits = shuffleArray(pairUnits);
+
+            let allUnits = shuffleArray([...otherUnits, ...pairUnits]);
+            let mainTrials = allUnits.flat();
+
             mainTrials.forEach(t => t.isPractice = false);
 
             let practicePool = [
@@ -352,8 +385,9 @@
                 { dL: 2, dR: 0, sL: 0, sR: 2 },
                 { dL: 1, dR: 1, sL: 1, sR: 1 },
                 { dL: 0, dR: 0, sL: 2, sR: 2 }
-            ].sort(() => Math.random() - 0.5);
+            ];
 
+            practicePool = shuffleArray(practicePool);
             practicePool.forEach(t => t.isPractice = true);
 
             trialList = [...practicePool, ...mainTrials];
