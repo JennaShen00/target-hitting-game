@@ -10,7 +10,6 @@
            GLOBAL & CSS VARIABLES
            ================================================== */
         :root {
-            /* Data URIs for a custom arrow cursor */
             --cursor-arrow: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M4 4 L28 12 L18 18 L12 28 Z" fill="%23222" stroke="white" stroke-width="2"/></svg>') 4 4, crosshair;
         }
 
@@ -20,11 +19,10 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f4f9;
             color: #333;
-            overflow: hidden; /* Prevent scrolling during the task */
+            overflow: hidden;
             cursor: var(--cursor-arrow);
         }
 
-        /* Screen containers */
         .screen {
             display: none;
             width: 100vw;
@@ -34,9 +32,6 @@
             left: 0;
         }
 
-        /* ==================================================
-           WELCOME & RESULTS SCREENS
-           ================================================== */
         #welcome-screen, #results-screen {
             flex-direction: column;
             justify-content: center;
@@ -45,7 +40,7 @@
             padding: 20px;
             box-sizing: border-box;
             background: #ffffff;
-            overflow-y: auto; /* Allow scroll on results if needed */
+            overflow-y: auto;
         }
 
         .container {
@@ -57,7 +52,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        /* Results specific container to allow a wider layout for the chart */
         #results-screen .container {
             max-width: 800px;
             margin: 40px 0;
@@ -66,10 +60,20 @@
         h1 { margin-top: 0; color: #2c3e50; }
         p { line-height: 1.6; font-size: 1.1rem; }
 
-        input[type="text"] {
+        .input-group {
+            text-align: left;
+            margin: 15px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="number"], select {
             width: 100%;
-            padding: 12px;
-            margin: 20px 0;
+            padding: 10px;
             border: 2px solid #ddd;
             border-radius: 4px;
             font-size: 1rem;
@@ -85,18 +89,16 @@
             border-radius: 4px;
             cursor: pointer;
             transition: background 0.3s;
+            margin-top: 20px;
         }
         button:hover { background-color: #2980b9; }
 
-        /* ==================================================
-           RESULTS DASHBOARD UI
-           ================================================== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             margin: 20px 0;
-            display: none; /* Hidden until loaded */
+            display: none;
         }
 
         .stat-box {
@@ -120,7 +122,7 @@
             height: 350px;
             width: 100%;
             margin-top: 30px;
-            display: none; /* Hidden until loaded */
+            display: none;
         }
 
         .loading-spinner {
@@ -129,9 +131,6 @@
             margin-top: 20px;
         }
 
-        /* ==================================================
-           TASK SCREEN UI
-           ================================================== */
         #task-screen { background-color: #eceff1; }
 
         #start-hold-btn {
@@ -170,7 +169,7 @@
             box-shadow: 0 8px 16px rgba(0,0,0,0.2);
         }
 
-        #feedback {
+        #feedback, #transition-msg {
             position: absolute;
             top: 20%;
             left: 50%;
@@ -181,6 +180,16 @@
             pointer-events: none;
             display: none;
             z-index: 20;
+            text-align: center;
+        }
+        
+        #transition-msg {
+            top: 45%;
+            color: #2980b9;
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #2980b9;
         }
     </style>
 </head>
@@ -189,16 +198,43 @@
     <div id="welcome-screen" class="screen" style="display: flex;">
         <div class="container">
             <h1>Target Hit Experiment</h1>
-            <p>Welcome! This is a target-hitting game. On each round, a button will appear in the center of the screen. <b>Press and hold</b> this center button. After a short delay, two archery targets will appear.</p>
-            <p>Your goal is to focus on hitting the <b>exact center</b> of one of the targets as accurately as possible. Take your time to be accurate.</p>
+            <p>Welcome! This experiment consists of <b>40 trials</b> in total.</p>
+            <p>Before we begin, you will complete <b>4 practice trials</b> to get familiar with the task. On each round, press and hold the center button until targets appear, then hit the bullseye.</p>
             
-            <input type="text" id="participant-id" placeholder="Enter Participant ID (or leave blank to auto-generate)">
-            <button id="start-btn">Start Task</button>
+            <div class="input-group">
+                <label>Participant ID:</label>
+                <input type="text" id="participant-id" placeholder="Leave blank to auto-generate">
+            </div>
+            <div class="input-group">
+                <label>Age:</label>
+                <input type="number" id="age" min="1" max="100">
+            </div>
+            <div class="input-group">
+                <label>Gender:</label>
+                <select id="gender">
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Handedness:</label>
+                <select id="handedness">
+                    <option value="">Select Handedness</option>
+                    <option value="Right">Right-handed</option>
+                    <option value="Left">Left-handed</option>
+                    <option value="Ambidextrous">Ambidextrous</option>
+                </select>
+            </div>
+
+            <button id="start-btn">Start Practice</button>
         </div>
     </div>
 
     <div id="task-screen" class="screen">
         <div id="feedback">Bullseye!</div>
+        <div id="transition-msg">Practice Finished!<br>Official Experiment Starts Now</div>
         <div id="start-hold-btn">Hold Me</div>
         <div id="target-left" class="target"></div>
         <div id="target-right" class="target"></div>
@@ -225,12 +261,11 @@
 
     <script>
         // ==========================================
-        // CONFIGURATION & PLACEHOLDERS
+        // CONFIGURATION
         // ==========================================
-        
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxRfWPZ7UBGUx24QJUbQlhVx9iUhEeJ9O6oXorThwvPKHO_K2kbiUvirIOXtszZEm9L/exec";
-
-        const TOTAL_TRIALS = 40;
+        const TOTAL_MAIN_TRIALS = 40;
+        const PRACTICE_TRIALS_COUNT = 4;
         const HOLD_DURATION_MS = 500;
         const HIT_RADIUS_PX = 5; 
 
@@ -239,13 +274,14 @@
 
         // Experiment State
         let participantId = "";
+        let age = "";
+        let gender = "";
+        let handedness = "";
         let currentTrialIndex = 0;
         let trialsData = [];
         let trialList = []; 
         let targetOnsetTime = 0;
         let holdTimer = null;
-
-        // User Summary Variables
         let userMeanRT = 0;
 
         // DOM Elements
@@ -253,18 +289,22 @@
         const taskScreen = document.getElementById("task-screen");
         const resultsScreen = document.getElementById("results-screen");
         const startBtn = document.getElementById("start-btn");
-        const partIdInput = document.getElementById("participant-id");
         const holdBtn = document.getElementById("start-hold-btn");
         const targetLeft = document.getElementById("target-left");
         const targetRight = document.getElementById("target-right");
         const feedbackEl = document.getElementById("feedback");
+        const transitionEl = document.getElementById("transition-msg");
 
         // ==========================================
         // INITIALIZATION
         // ==========================================
 
         startBtn.addEventListener("click", () => {
-            participantId = partIdInput.value.trim() || "P" + Math.random().toString(36).substring(2, 8).toUpperCase();
+            participantId = document.getElementById("participant-id").value.trim() || "P" + Math.random().toString(36).substring(2, 8).toUpperCase();
+            age = document.getElementById("age").value;
+            gender = document.getElementById("gender").value;
+            handedness = document.getElementById("handedness").value;
+
             generateTrials();
             welcomeScreen.style.display = "none";
             taskScreen.style.display = "block";
@@ -273,66 +313,61 @@
         });
 
         // ==========================================
-        // TRIAL GENERATION & LOGIC
+        // TRIAL GENERATION
         // ==========================================
 
-       function generateTrials() {
-    let trials = [];
+        function generateTrials() {
+            let mainTrials = [];
+            const reps = 4;
 
-    const reps = 4; // number of repetitions per (condition × side)
+            // Condition 1: Congruent
+            for (let i = 0; i < reps; i++) {
+                mainTrials.push({ dL: 0, dR: 2, sL: 2, sR: 0 }); 
+                mainTrials.push({ dL: 2, dR: 0, sL: 0, sR: 2 }); 
+            }
+            // Condition 2: Incongruent
+            for (let i = 0; i < reps; i++) {
+                mainTrials.push({ dL: 0, dR: 2, sL: 0, sR: 2 }); 
+                mainTrials.push({ dL: 2, dR: 0, sL: 2, sR: 0 }); 
+            }
+            // Condition 3: Equal
+            for (let i = 0; i < reps * 2; i++) {
+                mainTrials.push({ dL: 1, dR: 1, sL: 1, sR: 1 });
+            }
+            // Condition 4: Distance-only
+            for (let i = 0; i < reps; i++) {
+                mainTrials.push({ dL: 0, dR: 2, sL: 1, sR: 1 });
+                mainTrials.push({ dL: 2, dR: 0, sL: 1, sR: 1 });
+            }
+            // Condition 5: Salience-only
+            for (let i = 0; i < reps; i++) {
+                mainTrials.push({ dL: 1, dR: 1, sL: 2, sR: 0 });
+                mainTrials.push({ dL: 1, dR: 1, sL: 0, sR: 2 });
+            }
 
-    // ==================================================
-    // Condition 1: Congruent (distance and salience favor same side)
-    // ==================================================
-    for (let i = 0; i < reps; i++) {
-        trials.push({ dL: 0, dR: 2, sL: 2, sR: 0 }); // left better
-        trials.push({ dL: 2, dR: 0, sL: 0, sR: 2 }); // right better
-    }
+            // Shuffle main trials
+            mainTrials = mainTrials.sort(() => Math.random() - 0.5).slice(0, TOTAL_MAIN_TRIALS);
+            mainTrials.forEach(t => t.isPractice = false);
 
-    // ==================================================
-    // Condition 2: Incongruent (distance vs salience conflict)
-    // ==================================================
-    for (let i = 0; i < reps; i++) {
-        trials.push({ dL: 0, dR: 2, sL: 0, sR: 2 }); // left distance, right salience
-        trials.push({ dL: 2, dR: 0, sL: 2, sR: 0 }); // opposite
-    }
+            // Generate 4 random practice trials from the pool logic
+            let practicePool = [
+                { dL: 0, dR: 2, sL: 2, sR: 0 },
+                { dL: 2, dR: 0, sL: 0, sR: 2 },
+                { dL: 1, dR: 1, sL: 1, sR: 1 },
+                { dL: 0, dR: 0, sL: 2, sR: 2 }
+            ].sort(() => Math.random() - 0.5);
+            
+            practicePool.forEach(t => t.isPractice = true);
 
-    // ==================================================
-    // Condition 3: Equal (no difference between targets)
-    // Note: no left/right difference → total still 8 trials
-    // ==================================================
-    for (let i = 0; i < reps * 2; i++) {
-        trials.push({ dL: 1, dR: 1, sL: 1, sR: 1 });
-    }
-
-    // ==================================================
-    // Condition 4: Distance-only (distance differs, salience equal)
-    // ==================================================
-    for (let i = 0; i < reps; i++) {
-        trials.push({ dL: 0, dR: 2, sL: 1, sR: 1 }); // left closer
-        trials.push({ dL: 2, dR: 0, sL: 1, sR: 1 }); // right closer
-    }
-
-    // ==================================================
-    // Condition 5: Salience-only (salience differs, distance equal)
-    // ==================================================
-    for (let i = 0; i < reps; i++) {
-        trials.push({ dL: 1, dR: 1, sL: 2, sR: 0 }); // left more salient
-        trials.push({ dL: 1, dR: 1, sL: 0, sR: 2 }); // right more salient
-    }
-
-    // ==================================================
-    // Shuffle trials to randomize order
-    // ==================================================
-    trialList = trials.sort(() => Math.random() - 0.5);
-}
+            // Combine: 4 Practice + 40 Main
+            trialList = [...practicePool, ...mainTrials];
+        }
 
         function computeConditionType(dL, dR, sL, sR) {
             const leftDistBetter = dL < dR;
             const rightDistBetter = dR < dL;
             const leftSalBetter = sL > sR;
             const rightSalBetter = sR > sL;
-
             if (dL === dR && sL === sR) return 3; 
             if (dL !== dR && sL === sR) return 4; 
             if (dL === dR && sL !== sR) return 5; 
@@ -356,21 +391,36 @@
         }
 
         function startTrial() {
-            if (currentTrialIndex >= TOTAL_TRIALS) {
+            if (currentTrialIndex >= trialList.length) {
                 endExperiment();
                 return;
             }
+
+            // Special Transition after practice
+            if (currentTrialIndex === PRACTICE_TRIALS_COUNT) {
+                transitionEl.style.display = "block";
+                setTimeout(() => {
+                    transitionEl.style.display = "none";
+                    runTrialSetup();
+                }, 2000);
+            } else {
+                runTrialSetup();
+            }
+        }
+
+        function runTrialSetup() {
             targetLeft.style.display = "none";
             targetRight.style.display = "none";
             feedbackEl.style.display = "none";
             holdBtn.style.display = "flex";
-            holdBtn.innerText = "Hold Me";
+            const currentTrial = trialList[currentTrialIndex];
+            holdBtn.innerText = currentTrial.isPractice ? "Practice" : "Hold Me";
             holdBtn.style.background = "#2c3e50";
-            // Important: Change cursor back to default crosshair/arrow during wait
             document.body.style.cursor = "var(--cursor-arrow)"; 
         }
 
-        function handleHoldStart() {
+        function handleHoldStart(e) {
+            e.preventDefault();
             holdBtn.style.background = "#27ae60"; 
             holdTimer = setTimeout(showTargets, HOLD_DURATION_MS);
         }
@@ -380,14 +430,12 @@
                 clearTimeout(holdTimer);
                 holdTimer = null;
                 holdBtn.style.background = "#c0392b"; 
-                holdBtn.innerText = "Hold!";
                 setTimeout(() => { if(holdBtn.style.display !== "none") holdBtn.style.background = "#2c3e50"; }, 300);
             }
         }
 
         function showTargets() {
             holdBtn.style.display = "none";
-            
             const trial = trialList[currentTrialIndex];
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
@@ -417,12 +465,16 @@
             const rect = targetEl.getBoundingClientRect();
             const targetCenterX = rect.left + rect.width / 2;
             const targetCenterY = rect.top + rect.height / 2;
-            
             const distanceFromCenter = Math.hypot(event.clientX - targetCenterX, event.clientY - targetCenterY);
             const accuracy = distanceFromCenter <= HIT_RADIUS_PX ? 1 : 0;
 
+            // Log Data
             trialsData.push({
-                Participant_ID: participantId,
+                Participant_ID: trial.isPractice ? ("P" + (currentTrialIndex + 1)) : participantId,
+                Age: age,
+                Gender: gender,
+                Handedness: handedness,
+                Is_Practice: trial.isPractice ? "Yes" : "No",
                 Trial_Number: currentTrialIndex + 1,
                 Choice: choiceCode, 
                 Reaction_Time: reactionTime,
@@ -436,7 +488,6 @@
 
             targetLeft.style.display = "none";
             targetRight.style.display = "none";
-            
             feedbackEl.innerText = accuracy === 1 ? "Bullseye!" : "Almost there!";
             feedbackEl.style.color = accuracy === 1 ? "#27ae60" : "#e67e22";
             feedbackEl.style.display = "block";
@@ -449,68 +500,39 @@
         }
 
         // ==========================================
-        // DATA SUBMISSION & DASHBOARD RENDERING
+        // DATA SUBMISSION
         // ==========================================
 
         async function endExperiment() {
-            // 1. Show results screen UI state
             document.body.style.cursor = "default";
             taskScreen.style.display = "none";
             resultsScreen.style.display = "flex";
-            const loadingIndicator = document.getElementById("loading-indicator");
-
-            // 2. Calculate current participant's summary
             calculateUserSummary();
 
-            if (WEB_APP_URL === "YOUR_WEB_APP_URL_HERE") {
-                document.getElementById("final-subtext").innerHTML = "Data not saved/fetched: <i>WEB_APP_URL</i> was not configured.<br>Check console for your current data.";
-                loadingIndicator.style.display = "none";
-                document.getElementById("stats-grid").style.display = "grid";
-                console.log(JSON.stringify(trialsData, null, 2));
-                return;
-            }
-
             try {
-                // 3. POST data to save
                 await fetch(WEB_APP_URL, {
                     method: "POST",
                     body: JSON.stringify(trialsData)
                 });
-
-                document.getElementById("final-subtext").innerText = "Your data was saved. Fetching community statistics...";
-
-                // 4. GET historical data
+                document.getElementById("final-subtext").innerText = "Data saved. Fetching community statistics...";
                 const response = await fetch(WEB_APP_URL);
                 const result = await response.json();
-
-                if(result.status === "success" && result.data && result.data.length > 0) {
-                    renderHistogram(result.data);
-                } else {
-                    throw new Error("No historical data found or empty response.");
-                }
-
-                document.getElementById("final-subtext").innerText = "Here is how you compare to overall history!";
-
+                if(result.status === "success" && result.data) renderHistogram(result.data);
             } catch (error) {
-                console.error("Network/Fetch error:", error);
-                document.getElementById("final-subtext").innerText = "Your summary is below. (Could not load historical chart data).";
+                document.getElementById("final-subtext").innerText = "Summary displayed. (Cloud storage unavailable).";
             } finally {
-                // Hide loading, show stats and chart
-                loadingIndicator.style.display = "none";
+                document.getElementById("loading-indicator").style.display = "none";
                 document.getElementById("stats-grid").style.display = "grid";
             }
         }
 
         function calculateUserSummary() {
-            const total = trialsData.length;
+            const mainData = trialsData.filter(t => t.Is_Practice === "No");
+            const total = mainData.length;
             if (total === 0) return;
 
-            let sumRT = 0;
-            let sumAcc = 0;
-            let sumLeft = 0;
-            let sumRight = 0;
-
-            trialsData.forEach(t => {
+            let sumRT = 0, sumAcc = 0, sumLeft = 0, sumRight = 0;
+            mainData.forEach(t => {
                 sumRT += t.Reaction_Time;
                 sumAcc += t.Accuracy;
                 if(t.Choice === 0) sumLeft++;
@@ -518,123 +540,47 @@
             });
 
             userMeanRT = Math.round(sumRT / total);
-            const accPerc = Math.round((sumAcc / total) * 100);
-            const leftPerc = Math.round((sumLeft / total) * 100);
-            const rightPerc = Math.round((sumRight / total) * 100);
-
             document.getElementById("stat-rt").innerText = `${userMeanRT} ms`;
-            document.getElementById("stat-acc").innerText = `${accPerc} %`;
-            document.getElementById("stat-left").innerText = `${leftPerc} %`;
-            document.getElementById("stat-right").innerText = `${rightPerc} %`;
+            document.getElementById("stat-acc").innerText = `${Math.round((sumAcc / total) * 100)} %`;
+            document.getElementById("stat-left").innerText = `${Math.round((sumLeft / total) * 100)} %`;
+            document.getElementById("stat-right").innerText = `${Math.round((sumRight / total) * 100)} %`;
         }
 
         function renderHistogram(historicalData) {
-            // Extract all numeric Reaction Times
-            const allRTs = historicalData
-                .map(row => Number(row.Reaction_Time))
-                .filter(rt => !isNaN(rt) && rt > 0);
-
+            const allRTs = historicalData.map(row => Number(row.Reaction_Time)).filter(rt => !isNaN(rt) && rt > 0);
             if (allRTs.length === 0) return;
 
-            // Define bins (e.g., 50ms intervals)
             const binSize = 50;
             const minRT = Math.floor(Math.min(...allRTs) / binSize) * binSize;
-            // Cap visual max to 99th percentile to prevent extreme outliers skewing the chart
             const sortedRTs = [...allRTs].sort((a,b) => a-b);
             const p99 = sortedRTs[Math.floor(sortedRTs.length * 0.99)] || sortedRTs[sortedRTs.length-1];
-            let maxRT = Math.ceil(p99 / binSize) * binSize;
-            
-            // Ensure the user's mean RT fits on the chart
-            if (userMeanRT > maxRT) maxRT = Math.ceil(userMeanRT / binSize) * binSize;
+            let maxRT = Math.ceil(Math.max(p99, userMeanRT) / binSize) * binSize;
 
-            const bins = [];
-            const labels = [];
-            
+            const bins = [], labels = [];
             for (let i = minRT; i <= maxRT; i += binSize) {
                 bins.push(0);
                 labels.push(`${i}-${i+binSize}`);
             }
 
-            // Populate frequencies
             allRTs.forEach(rt => {
-                if (rt >= minRT && rt <= maxRT + binSize) { // include if within bounds
-                    let index = Math.floor((rt - minRT) / binSize);
-                    if (index >= bins.length) index = bins.length - 1;
-                    if (index < 0) index = 0;
-                    bins[index]++;
-                }
+                let idx = Math.floor((rt - minRT) / binSize);
+                if (idx >= 0 && idx < bins.length) bins[idx]++;
             });
 
-            // Find which bin the current participant belongs to for highlighting
             let userBinIndex = Math.floor((userMeanRT - minRT) / binSize);
-            if (userBinIndex < 0) userBinIndex = 0;
-            if (userBinIndex >= bins.length) userBinIndex = bins.length - 1;
+            const backgroundColors = bins.map((_, i) => i === userBinIndex ? 'rgba(231, 76, 60, 0.9)' : 'rgba(52, 152, 219, 0.6)');
 
-            // Colors: standard blue, but the user's bin is distinct red
-            const backgroundColors = bins.map((_, i) => 
-                i === userBinIndex ? 'rgba(231, 76, 60, 0.9)' : 'rgba(52, 152, 219, 0.6)'
-            );
-            const borderColors = bins.map((_, i) => 
-                i === userBinIndex ? 'rgba(192, 57, 43, 1)' : 'rgba(41, 128, 185, 1)'
-            );
-
-            // Show chart container
             document.getElementById("chart-wrapper").style.display = "block";
-
-            // Render Chart
             const ctx = document.getElementById('rtChart').getContext('2d');
             new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Historical Frequency',
-                        data: bins,
-                        backgroundColor: backgroundColors,
-                        borderColor: borderColors,
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
+                    datasets: [{ label: 'Frequency', data: bins, backgroundColor: backgroundColors }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Reaction Time Distribution (Red bar indicates your mean performance)',
-                            font: { size: 16 }
-                        },
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = `Frequency: ${context.parsed.y}`;
-                                    if (context.dataIndex === userBinIndex) {
-                                        label += ' (Your Mean RT falls here)';
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Reaction Time (ms)',
-                                font: { weight: 'bold' }
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Frequency (Number of Trials)',
-                                font: { weight: 'bold' }
-                            },
-                            beginAtZero: true
-                        }
-                    }
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: 'Your Performance vs History' }, legend: { display: false } }
                 }
             });
         }
