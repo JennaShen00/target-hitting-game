@@ -535,7 +535,16 @@
             targetRight.style.display = "none";
             holdBtn.style.display = "none";
 
-            trialFeedback.innerHTML = `Trial ${tNum}<br>Error: ${err}px`;
+            let feedbackLabel = "";
+            if (err <= 5) {
+                feedbackLabel = "Hit";
+            } else if (err <= 20) {
+                feedbackLabel = "Small error";
+            } else {
+                feedbackLabel = "Miss";
+            }
+            
+            trialFeedback.innerHTML = `${feedbackLabel}<br>${err}px from center`;
             trialFeedback.style.display = "flex";
 
             currentTrialIndex++;
