@@ -536,10 +536,12 @@
             holdBtn.style.display = "none";
 
             let feedbackLabel = "";
-            if (err <= 5) {
+            if (err === 0) {
+                feedbackLabel = "Perfect!";
+            } else if (err <= 5) {
                 feedbackLabel = "Hit";
             } else if (err <= 20) {
-                feedbackLabel = "Small error";
+                feedbackLabel = "Almost there";
             } else {
                 feedbackLabel = "Miss";
             }
