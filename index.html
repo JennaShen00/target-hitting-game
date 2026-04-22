@@ -197,6 +197,22 @@
             z-index: 200;
             text-align: center;
         }
+
+        #trial-counter {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 250;
+            background: rgba(255,255,255,0.95);
+            color: #2c3e50;
+            border: 2px solid #2980b9;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 1rem;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -240,6 +256,7 @@
 
     <div id="task-screen" class="screen">
         <div id="transition-msg">Practice Finished!<br>Official Experiment Starts Now</div>
+        <div id="trial-counter">Trial: 1/40</div>
         <div id="trial-feedback"></div>
         <div id="start-hold-btn">Hold Me</div>
         <div id="target-left" class="target"></div>
@@ -295,6 +312,7 @@
         const targetLeft = document.getElementById("target-left");
         const targetRight = document.getElementById("target-right");
         const trialFeedback = document.getElementById("trial-feedback");
+        const trialCounter = document.getElementById("trial-counter");
 
         startBtn.addEventListener("click", () => {
             participantId = document.getElementById("participant-id").value.trim() || "P" + Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -393,6 +411,15 @@
             trialList = [...practicePool, ...mainTrials];
         }
 
+        function updateTrialCounter() {
+            if (currentTrialIndex < PRACTICE_TRIALS_COUNT) {
+                trialCounter.innerText = `Practice: ${currentTrialIndex + 1}/${PRACTICE_TRIALS_COUNT}`;
+            } else {
+                trialCounter.innerText = `Trial: ${currentTrialIndex - PRACTICE_TRIALS_COUNT + 1}/${TOTAL_MAIN_TRIALS}`;
+            }
+            trialCounter.style.display = "block";
+        }
+
         function setupTaskArea() {
             holdBtn.style.left = "50%";
             holdBtn.style.top = "50%";
@@ -443,6 +470,8 @@
             targetRight.style.display = "none";
             trialFeedback.style.display = "none";
             holdBtn.style.display = "flex";
+
+            updateTrialCounter();
 
             const trial = trialList[currentTrialIndex];
             holdBtn.innerText = trial.isPractice ? "Practice" : "Hold Me";
