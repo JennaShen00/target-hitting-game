@@ -141,7 +141,9 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "YOUR_SCRIPT_URL_HERE"; 
+        // Updated with your actual Web App URL
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw317u9uAYxix2av-AjaJ3xeELcLj6ta1VADtxeZwxnxGogF6W-nG9Mdar_QY8k14cq/exec"; 
+        
         const TOTAL_MAIN_TRIALS = 40;
         const PRACTICE_TRIALS_COUNT = 4;
         const HOLD_DURATION_MS = 500;
@@ -184,7 +186,7 @@
         function generateTrials() {
             let mainTrials = [];
             const reps = 4;
-            // Congruent, Incongruent, Equal, Distance-only, Salience-only... (keeping your original logic)
+            // Congruent, Incongruent, Equal, Distance-only, Salience-only
             for (let i = 0; i < reps; i++) {
                 mainTrials.push({ dL: 0, dR: 2, sL: 2, sR: 0 }); 
                 mainTrials.push({ dL: 2, dR: 0, sL: 0, sR: 2 }); 
