@@ -461,6 +461,7 @@
             const clickTime = performance.now();
             const reactionTime = Math.round(clickTime - targetOnsetTime);
             const trial = trialList[currentTrialIndex];
+            const timestamp = new Date().toISOString();
             
             const rect = targetEl.getBoundingClientRect();
             const targetCenterX = rect.left + rect.width / 2;
@@ -468,14 +469,15 @@
             const distanceFromCenter = Math.hypot(event.clientX - targetCenterX, event.clientY - targetCenterY);
             const accuracy = distanceFromCenter <= HIT_RADIUS_PX ? 1 : 0;
 
-            // Log Data
+            // Log Data strictly in the requested column order
             trialsData.push({
                 Participant_ID: trial.isPractice ? ("P" + (currentTrialIndex + 1)) : participantId,
-                Age: age,
                 Gender: gender,
+                Age: age,
                 Handedness: handedness,
                 Is_Practice: trial.isPractice ? "Yes" : "No",
                 Trial_Number: currentTrialIndex + 1,
+                Timestamp: timestamp,
                 Choice: choiceCode, 
                 Reaction_Time: reactionTime,
                 Accuracy: accuracy,
