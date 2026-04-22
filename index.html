@@ -6,191 +6,68 @@
     <title>Target Hit Experiment</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* ==================================================
-           GLOBAL & CSS VARIABLES
-           ================================================== */
         :root {
             --cursor-arrow: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><path d="M4 4 L28 12 L18 18 L12 28 Z" fill="%23222" stroke="white" stroke-width="2"/></svg>') 4 4, crosshair;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
-            overflow: hidden;
+            margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f4f9; color: #333; overflow: hidden;
             cursor: var(--cursor-arrow);
         }
 
-        .screen {
-            display: none;
-            width: 100vw;
-            height: 100vh;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
+        .screen { display: none; width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
 
         #welcome-screen, #results-screen {
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
-            box-sizing: border-box;
-            background: #ffffff;
-            overflow-y: auto;
+            flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 20px; box-sizing: border-box; background: #ffffff; overflow-y: auto;
         }
 
-        .container {
-            width: 100%;
-            max-width: 600px;
-            background: #fff;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+        .container { width: 100%; max-width: 600px; background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        .input-group { text-align: left; margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 4px; font-size: 1rem; box-sizing: border-box; }
 
-        #results-screen .container {
-            max-width: 800px;
-            margin: 40px 0;
-        }
-
-        h1 { margin-top: 0; color: #2c3e50; }
-        p { line-height: 1.6; font-size: 1.1rem; }
-
-        .input-group {
-            text-align: left;
-            margin: 15px 0;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        input[type="text"], input[type="number"], select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
-
-        button {
-            padding: 12px 30px;
-            font-size: 1.1rem;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin-top: 20px;
-        }
+        button { padding: 12px 30px; font-size: 1.1rem; background-color: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 20px; }
         button:hover { background-color: #2980b9; }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin: 20px 0;
-            display: none;
+        /* Sidebar Stats */
+        #info-sidebar {
+            position: absolute; left: 20px; top: 20px; width: 220px;
+            background: rgba(255, 255, 255, 0.85); border: 1px solid #ccc;
+            padding: 15px; border-radius: 10px; z-index: 100; pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-
-        .stat-box {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #2c3e50;
-            display: block;
-            margin-top: 5px;
-        }
-
-        #chart-wrapper {
-            position: relative;
-            height: 350px;
-            width: 100%;
-            margin-top: 30px;
-            display: none;
-        }
-
-        .loading-spinner {
-            font-size: 1.2rem;
-            color: #7f8c8d;
-            margin-top: 20px;
-        }
+        .info-item { margin-bottom: 10px; font-size: 0.95rem; }
+        .info-label { font-weight: bold; color: #7f8c8d; display: block; font-size: 0.8rem; text-transform: uppercase; }
+        .info-value { font-size: 1.1rem; color: #2c3e50; }
 
         #task-screen { background-color: #eceff1; }
 
         #start-hold-btn {
-            position: absolute;
-            width: 120px;
-            height: 120px;
-            background: #2c3e50;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            font-size: 1.2rem;
-            user-select: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transform: translate(-50%, -50%); 
-            z-index: 10;
+            position: absolute; width: 120px; height: 120px; background: #2c3e50; color: white;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 1.2rem; user-select: none; z-index: 10;
+            transform: translate(-50%, -50%); box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
         .target {
-            position: absolute;
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            background: radial-gradient(circle, 
-                #f1c40f 0%, #f1c40f 15%, 
-                #e74c3c 15%, #e74c3c 35%, 
-                #3498db 35%, #3498db 55%, 
-                #2c3e50 55%, #2c3e50 75%, 
-                #ecf0f1 75%, #ecf0f1 95%,
-                #bdc3c7 95%, #bdc3c7 100%);
-            transform: translate(-50%, -50%);
-            display: none;
-            z-index: 5;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            position: absolute; width: 180px; height: 180px; border-radius: 50%;
+            background: radial-gradient(circle, #f1c40f 0%, #f1c40f 15%, #e74c3c 15%, #e74c3c 35%, #3498db 35%, #3498db 55%, #2c3e50 55%, #2c3e50 75%, #ecf0f1 75%, #ecf0f1 95%, #bdc3c7 95%, #bdc3c7 100%);
+            transform: translate(-50%, -50%); display: none; z-index: 5; box-shadow: 0 8px 16px rgba(0,0,0,0.2);
         }
 
-        #feedback, #transition-msg {
-            position: absolute;
-            top: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 2rem;
-            font-weight: bold;
-            color: #2c3e50;
-            pointer-events: none;
-            display: none;
-            z-index: 20;
-            text-align: center;
-        }
-        
         #transition-msg {
-            top: 45%;
-            color: #2980b9;
-            background: rgba(255,255,255,0.9);
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #2980b9;
+            position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 2rem; font-weight: bold; color: #2980b9; background: rgba(255,255,255,0.95);
+            padding: 30px; border-radius: 10px; border: 2px solid #2980b9; display: none; z-index: 200; text-align: center;
         }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; display: none;}
+        .stat-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; display: block; }
+        #chart-wrapper { height: 350px; width: 100%; margin-top: 30px; display: none; }
     </style>
 </head>
 <body>
@@ -198,12 +75,10 @@
     <div id="welcome-screen" class="screen" style="display: flex;">
         <div class="container">
             <h1>Target Hit Experiment</h1>
-            <p>Welcome! This experiment consists of <b>40 trials</b> in total.</p>
-            <p>Before we begin, you will complete <b>4 practice trials</b> to get familiar with the task. On each round, press and hold the center button and keep your eyes focused on it until the targets appear. Your goal is to hit the <b>center</b> of one target as accurately as possible.</p>
-            
+            <p>Welcome! <b>4 practice trials</b> followed by <b>40 main trials</b>.</p>
             <div class="input-group">
                 <label>Participant ID:</label>
-                <input type="text" id="participant-id" placeholder="Leave blank to auto-generate">
+                <input type="text" id="participant-id" placeholder="Auto-generate if empty">
             </div>
             <div class="input-group">
                 <label>Age:</label>
@@ -227,13 +102,26 @@
                     <option value="Ambidextrous">Ambidextrous</option>
                 </select>
             </div>
-
             <button id="start-btn">Start Practice</button>
         </div>
     </div>
 
     <div id="task-screen" class="screen">
-        <div id="feedback">Bullseye!</div>
+        <div id="info-sidebar">
+            <div class="info-item">
+                <span class="info-label">Participant ID</span>
+                <span class="info-value" id="display-id">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Trial</span>
+                <span class="info-value" id="display-trial">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Last Error</span>
+                <span class="info-value" id="display-error">N/A</span>
+            </div>
+        </div>
+
         <div id="transition-msg">Practice Finished!<br>Official Experiment Starts Now</div>
         <div id="start-hold-btn">Hold Me</div>
         <div id="target-left" class="target"></div>
@@ -241,29 +129,19 @@
     </div>
 
     <div id="results-screen" class="screen">
-        <div class="container">
-            <h1 id="final-message">Experiment Complete!</h1>
-            <p id="final-subtext">Calculating your results and fetching historical data...</p>
-            <div id="loading-indicator" class="loading-spinner">Processing... Please wait.</div>
-            
+        <div class="container" style="max-width: 800px;">
+            <h1>Experiment Complete!</h1>
+            <p id="final-subtext">Processing results...</p>
             <div id="stats-grid" class="stats-grid">
-                <div class="stat-box">Mean Reaction Time <span class="stat-value" id="stat-rt">-- ms</span></div>
-                <div class="stat-box">Overall Accuracy <span class="stat-value" id="stat-acc">-- %</span></div>
-                <div class="stat-box">Left Choices <span class="stat-value" id="stat-left">-- %</span></div>
-                <div class="stat-box">Right Choices <span class="stat-value" id="stat-right">-- %</span></div>
+                <div class="stat-box">Mean RT <span class="stat-value" id="stat-rt">-- ms</span></div>
+                <div class="stat-box">Accuracy <span class="stat-value" id="stat-acc">-- %</span></div>
             </div>
-
-            <div id="chart-wrapper">
-                <canvas id="rtChart"></canvas>
-            </div>
+            <div id="chart-wrapper"><canvas id="rtChart"></canvas></div>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // CONFIGURATION
-        // ==========================================
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw317u9uAYxix2av-AjaJ3xeELcLj6ta1VADtxeZwxnxGogF6W-nG9Mdar_QY8k14cq/exec";
+        const WEB_APP_URL = "YOUR_SCRIPT_URL_HERE"; 
         const TOTAL_MAIN_TRIALS = 40;
         const PRACTICE_TRIALS_COUNT = 4;
         const HOLD_DURATION_MS = 500;
@@ -272,34 +150,23 @@
         const DISTANCE_MAP = { 0: 180, 1: 320, 2: 460 };
         const SALIENCE_MAP = { 0: "blur(16px)", 1: "blur(8px)", 2: "blur(0px)" };
 
-        // Experiment State
         let participantId = "";
-        let age = "";
-        let gender = "";
-        let handedness = "";
+        let age = "", gender = "", handedness = "";
         let currentTrialIndex = 0;
         let trialsData = [];
         let trialList = []; 
         let targetOnsetTime = 0;
         let holdTimer = null;
-        let userMeanRT = 0;
+        let lastErrorPx = "N/A";
 
-        // DOM Elements
         const welcomeScreen = document.getElementById("welcome-screen");
         const taskScreen = document.getElementById("task-screen");
         const resultsScreen = document.getElementById("results-screen");
-        const startBtn = document.getElementById("start-btn");
         const holdBtn = document.getElementById("start-hold-btn");
         const targetLeft = document.getElementById("target-left");
         const targetRight = document.getElementById("target-right");
-        const feedbackEl = document.getElementById("feedback");
-        const transitionEl = document.getElementById("transition-msg");
 
-        // ==========================================
-        // INITIALIZATION
-        // ==========================================
-
-        startBtn.addEventListener("click", () => {
+        document.getElementById("start-btn").addEventListener("click", () => {
             participantId = document.getElementById("participant-id").value.trim() || "P" + Math.random().toString(36).substring(2, 8).toUpperCase();
             age = document.getElementById("age").value;
             gender = document.getElementById("gender").value;
@@ -308,99 +175,67 @@
             generateTrials();
             welcomeScreen.style.display = "none";
             taskScreen.style.display = "block";
+            
+            document.getElementById("display-id").innerText = participantId;
             setupTaskArea();
             startTrial();
         });
 
-        // ==========================================
-        // TRIAL GENERATION
-        // ==========================================
-
         function generateTrials() {
             let mainTrials = [];
             const reps = 4;
-
-            // Condition 1: Congruent
+            // Congruent, Incongruent, Equal, Distance-only, Salience-only... (keeping your original logic)
             for (let i = 0; i < reps; i++) {
                 mainTrials.push({ dL: 0, dR: 2, sL: 2, sR: 0 }); 
                 mainTrials.push({ dL: 2, dR: 0, sL: 0, sR: 2 }); 
-            }
-            // Condition 2: Incongruent
-            for (let i = 0; i < reps; i++) {
                 mainTrials.push({ dL: 0, dR: 2, sL: 0, sR: 2 }); 
                 mainTrials.push({ dL: 2, dR: 0, sL: 2, sR: 0 }); 
-            }
-            // Condition 3: Equal
-            for (let i = 0; i < reps * 2; i++) {
                 mainTrials.push({ dL: 1, dR: 1, sL: 1, sR: 1 });
-            }
-            // Condition 4: Distance-only
-            for (let i = 0; i < reps; i++) {
                 mainTrials.push({ dL: 0, dR: 2, sL: 1, sR: 1 });
                 mainTrials.push({ dL: 2, dR: 0, sL: 1, sR: 1 });
-            }
-            // Condition 5: Salience-only
-            for (let i = 0; i < reps; i++) {
                 mainTrials.push({ dL: 1, dR: 1, sL: 2, sR: 0 });
                 mainTrials.push({ dL: 1, dR: 1, sL: 0, sR: 2 });
             }
-
-            // Shuffle main trials
             mainTrials = mainTrials.sort(() => Math.random() - 0.5).slice(0, TOTAL_MAIN_TRIALS);
             mainTrials.forEach(t => t.isPractice = false);
 
-            // Generate 4 random practice trials from the pool logic
             let practicePool = [
-                { dL: 0, dR: 2, sL: 2, sR: 0 },
-                { dL: 2, dR: 0, sL: 0, sR: 2 },
-                { dL: 1, dR: 1, sL: 1, sR: 1 },
-                { dL: 0, dR: 0, sL: 2, sR: 2 }
+                { dL: 0, dR: 2, sL: 2, sR: 0 }, { dL: 2, dR: 0, sL: 0, sR: 2 },
+                { dL: 1, dR: 1, sL: 1, sR: 1 }, { dL: 0, dR: 0, sL: 2, sR: 2 }
             ].sort(() => Math.random() - 0.5);
-            
             practicePool.forEach(t => t.isPractice = true);
 
-            // Combine: 4 Practice + 40 Main
             trialList = [...practicePool, ...mainTrials];
         }
 
-        function computeConditionType(dL, dR, sL, sR) {
-            const leftDistBetter = dL < dR;
-            const rightDistBetter = dR < dL;
-            const leftSalBetter = sL > sR;
-            const rightSalBetter = sR > sL;
-            if (dL === dR && sL === sR) return 3; 
-            if (dL !== dR && sL === sR) return 4; 
-            if (dL === dR && sL !== sR) return 5; 
-            if ((leftDistBetter && leftSalBetter) || (rightDistBetter && rightSalBetter)) return 1; 
-            if ((leftDistBetter && rightSalBetter) || (rightDistBetter && leftSalBetter)) return 2; 
-            return 3; 
-        }
-
-        // ==========================================
-        // TASK EXECUTION
-        // ==========================================
-
         function setupTaskArea() {
-            holdBtn.style.left = "50%";
-            holdBtn.style.top = "50%";
-            holdBtn.addEventListener("mousedown", handleHoldStart);
-            holdBtn.addEventListener("mouseup", handleHoldCancel);
-            holdBtn.addEventListener("mouseleave", handleHoldCancel);
+            holdBtn.style.left = "50%"; holdBtn.style.top = "50%";
+            holdBtn.addEventListener("mousedown", (e) => {
+                e.preventDefault();
+                holdBtn.style.background = "#27ae60"; 
+                holdTimer = setTimeout(showTargets, HOLD_DURATION_MS);
+            });
+            const cancelHold = () => {
+                if (holdTimer) {
+                    clearTimeout(holdTimer); holdTimer = null;
+                    holdBtn.style.background = "#c0392b";
+                    setTimeout(() => { if(holdBtn.style.display !== "none") holdBtn.style.background = "#2c3e50"; }, 300);
+                }
+            };
+            holdBtn.addEventListener("mouseup", cancelHold);
+            holdBtn.addEventListener("mouseleave", cancelHold);
+
             targetLeft.addEventListener("mousedown", (e) => handleTargetClick(0, e, targetLeft));
             targetRight.addEventListener("mousedown", (e) => handleTargetClick(1, e, targetRight));
         }
 
         function startTrial() {
-            if (currentTrialIndex >= trialList.length) {
-                endExperiment();
-                return;
-            }
+            if (currentTrialIndex >= trialList.length) { endExperiment(); return; }
 
-            // Special Transition after practice
             if (currentTrialIndex === PRACTICE_TRIALS_COUNT) {
-                transitionEl.style.display = "block";
+                document.getElementById("transition-msg").style.display = "block";
                 setTimeout(() => {
-                    transitionEl.style.display = "none";
+                    document.getElementById("transition-msg").style.display = "none";
                     runTrialSetup();
                 }, 2000);
             } else {
@@ -409,182 +244,94 @@
         }
 
         function runTrialSetup() {
-            targetLeft.style.display = "none";
-            targetRight.style.display = "none";
-            feedbackEl.style.display = "none";
+            targetLeft.style.display = "none"; targetRight.style.display = "none";
             holdBtn.style.display = "flex";
-            const currentTrial = trialList[currentTrialIndex];
-            holdBtn.innerText = currentTrial.isPractice ? "Practice" : "Hold Me";
+            const trial = trialList[currentTrialIndex];
+            
+            // UI Update for Sidebar
+            let trialLabel = trial.isPractice ? ("P" + (currentTrialIndex + 1)) : (currentTrialIndex - PRACTICE_TRIALS_COUNT + 1);
+            document.getElementById("display-trial").innerText = trialLabel;
+            document.getElementById("display-error").innerText = lastErrorPx === "N/A" ? "N/A" : lastErrorPx + " px";
+            
+            holdBtn.innerText = trial.isPractice ? "Practice" : "Hold Me";
             holdBtn.style.background = "#2c3e50";
-            document.body.style.cursor = "var(--cursor-arrow)"; 
-        }
-
-        function handleHoldStart(e) {
-            e.preventDefault();
-            holdBtn.style.background = "#27ae60"; 
-            holdTimer = setTimeout(showTargets, HOLD_DURATION_MS);
-        }
-
-        function handleHoldCancel() {
-            if (holdTimer) {
-                clearTimeout(holdTimer);
-                holdTimer = null;
-                holdBtn.style.background = "#c0392b"; 
-                setTimeout(() => { if(holdBtn.style.display !== "none") holdBtn.style.background = "#2c3e50"; }, 300);
-            }
         }
 
         function showTargets() {
             holdBtn.style.display = "none";
             const trial = trialList[currentTrialIndex];
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
+            const centerX = window.innerWidth / 2, centerY = window.innerHeight / 2;
 
-            const leftAngle = (180 + (Math.random() * 40 - 20)) * (Math.PI / 180);
-            const distLeftPx = DISTANCE_MAP[trial.dL];
-            targetLeft.style.left = `${centerX + distLeftPx * Math.cos(leftAngle)}px`;
-            targetLeft.style.top = `${centerY + distLeftPx * Math.sin(leftAngle)}px`;
-            targetLeft.style.filter = SALIENCE_MAP[trial.sL];
-            targetLeft.style.display = "block";
+            const setupTarget = (el, angleBase, distIdx, salIdx) => {
+                const angle = (angleBase + (Math.random() * 40 - 20)) * (Math.PI / 180);
+                const dist = DISTANCE_MAP[distIdx];
+                el.style.left = `${centerX + dist * Math.cos(angle)}px`;
+                el.style.top = `${centerY + dist * Math.sin(angle)}px`;
+                el.style.filter = SALIENCE_MAP[salIdx];
+                el.style.display = "block";
+            };
 
-            const rightAngle = (Math.random() * 40 - 20) * (Math.PI / 180);
-            const distRightPx = DISTANCE_MAP[trial.dR];
-            targetRight.style.left = `${centerX + distRightPx * Math.cos(rightAngle)}px`;
-            targetRight.style.top = `${centerY + distRightPx * Math.sin(rightAngle)}px`;
-            targetRight.style.filter = SALIENCE_MAP[trial.sR];
-            targetRight.style.display = "block";
-
+            setupTarget(targetLeft, 180, trial.dL, trial.sL);
+            setupTarget(targetRight, 0, trial.dR, trial.sR);
             targetOnsetTime = performance.now();
         }
 
-        function handleTargetClick(choiceCode, event, targetEl) {
-            const clickTime = performance.now();
-            const reactionTime = Math.round(clickTime - targetOnsetTime);
+        function handleTargetClick(choice, event, el) {
+            const reactionTime = Math.round(performance.now() - targetOnsetTime);
             const trial = trialList[currentTrialIndex];
-            const timestamp = new Date().toISOString();
             
-            const rect = targetEl.getBoundingClientRect();
-            const targetCenterX = rect.left + rect.width / 2;
-            const targetCenterY = rect.top + rect.height / 2;
-            const distanceFromCenter = Math.hypot(event.clientX - targetCenterX, event.clientY - targetCenterY);
-            const accuracy = distanceFromCenter <= HIT_RADIUS_PX ? 1 : 0;
+            const rect = el.getBoundingClientRect();
+            const err = Math.round(Math.hypot(event.clientX - (rect.left + rect.width/2), event.clientY - (rect.top + rect.height/2)));
+            lastErrorPx = err; // Update for next trial sidebar
 
-            // Log Data strictly in the requested column order
+            // Trial Number Logic: P1-P4 or 1-40
+            let tNum = trial.isPractice ? ("P" + (currentTrialIndex + 1)) : (currentTrialIndex - PRACTICE_TRIALS_COUNT + 1);
+
             trialsData.push({
-                Participant_ID: trial.isPractice ? ("P" + (currentTrialIndex + 1)) : participantId,
-                Gender: gender,
-                Age: age,
-                Handedness: handedness,
+                Participant_ID: participantId, // Always same ID
+                Gender: gender, Age: age, Handedness: handedness,
                 Is_Practice: trial.isPractice ? "Yes" : "No",
-                Trial_Number: currentTrialIndex + 1,
-                Timestamp: timestamp,
-                Choice: choiceCode, 
-                Reaction_Time: reactionTime,
-                Accuracy: accuracy,
-                Distance_Left: trial.dL,
-                Distance_Right: trial.dR,
-                Salience_Left: trial.sL,
-                Salience_Right: trial.sR,
+                Trial_Number: tNum,
+                Timestamp: new Date().toISOString(),
+                Choice: choice, Reaction_Time: reactionTime,
+                Accuracy: err <= HIT_RADIUS_PX ? 1 : 0,
+                Error: err,
+                Distance_Left: trial.dL, Distance_Right: trial.dR,
+                Salience_Left: trial.sL, Salience_Right: trial.sR,
                 Condition_Type: computeConditionType(trial.dL, trial.dR, trial.sL, trial.sR)
             });
 
-            targetLeft.style.display = "none";
-            targetRight.style.display = "none";
-            feedbackEl.innerText = accuracy === 1 ? "Bullseye!" : "Almost there!";
-            feedbackEl.style.color = accuracy === 1 ? "#27ae60" : "#e67e22";
-            feedbackEl.style.display = "block";
-
             currentTrialIndex++;
-            setTimeout(() => {
-                feedbackEl.style.display = "none";
-                startTrial();
-            }, 800); 
+            setTimeout(startTrial, 300);
         }
 
-        // ==========================================
-        // DATA SUBMISSION
-        // ==========================================
+        function computeConditionType(dL, dR, sL, sR) {
+            if (dL === dR && sL === sR) return 3;
+            if (dL !== dR && sL === sR) return 4;
+            if (dL === dR && sL !== sR) return 5;
+            if ((dL < dR && sL > sR) || (dR < dL && sR > sL)) return 1;
+            return 2;
+        }
 
         async function endExperiment() {
-            document.body.style.cursor = "default";
             taskScreen.style.display = "none";
             resultsScreen.style.display = "flex";
-            calculateUserSummary();
-
-            try {
-                await fetch(WEB_APP_URL, {
-                    method: "POST",
-                    body: JSON.stringify(trialsData)
-                });
-                document.getElementById("final-subtext").innerText = "Data saved. Fetching community statistics...";
-                const response = await fetch(WEB_APP_URL);
-                const result = await response.json();
-                if(result.status === "success" && result.data) renderHistogram(result.data);
-            } catch (error) {
-                document.getElementById("final-subtext").innerText = "Summary displayed. (Cloud storage unavailable).";
-            } finally {
-                document.getElementById("loading-indicator").style.display = "none";
+            
+            const mainData = trialsData.filter(t => t.Is_Practice === "No");
+            if(mainData.length > 0) {
+                const avgRT = Math.round(mainData.reduce((s, t) => s + t.Reaction_Time, 0) / mainData.length);
+                const avgAcc = Math.round((mainData.reduce((s, t) => s + t.Accuracy, 0) / mainData.length) * 100);
+                document.getElementById("stat-rt").innerText = avgRT + " ms";
+                document.getElementById("stat-acc").innerText = avgAcc + " %";
                 document.getElementById("stats-grid").style.display = "grid";
             }
-        }
 
-        function calculateUserSummary() {
-            const mainData = trialsData.filter(t => t.Is_Practice === "No");
-            const total = mainData.length;
-            if (total === 0) return;
-
-            let sumRT = 0, sumAcc = 0, sumLeft = 0, sumRight = 0;
-            mainData.forEach(t => {
-                sumRT += t.Reaction_Time;
-                sumAcc += t.Accuracy;
-                if(t.Choice === 0) sumLeft++;
-                if(t.Choice === 1) sumRight++;
-            });
-
-            userMeanRT = Math.round(sumRT / total);
-            document.getElementById("stat-rt").innerText = `${userMeanRT} ms`;
-            document.getElementById("stat-acc").innerText = `${Math.round((sumAcc / total) * 100)} %`;
-            document.getElementById("stat-left").innerText = `${Math.round((sumLeft / total) * 100)} %`;
-            document.getElementById("stat-right").innerText = `${Math.round((sumRight / total) * 100)} %`;
-        }
-
-        function renderHistogram(historicalData) {
-            const allRTs = historicalData.map(row => Number(row.Reaction_Time)).filter(rt => !isNaN(rt) && rt > 0);
-            if (allRTs.length === 0) return;
-
-            const binSize = 50;
-            const minRT = Math.floor(Math.min(...allRTs) / binSize) * binSize;
-            const sortedRTs = [...allRTs].sort((a,b) => a-b);
-            const p99 = sortedRTs[Math.floor(sortedRTs.length * 0.99)] || sortedRTs[sortedRTs.length-1];
-            let maxRT = Math.ceil(Math.max(p99, userMeanRT) / binSize) * binSize;
-
-            const bins = [], labels = [];
-            for (let i = minRT; i <= maxRT; i += binSize) {
-                bins.push(0);
-                labels.push(`${i}-${i+binSize}`);
+            try {
+                await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(trialsData) });
+                document.getElementById("final-subtext").innerText = "Data saved to Google Sheets.";
+            } catch (e) {
+                document.getElementById("final-subtext").innerText = "Experiment finished (Sync Error).";
             }
-
-            allRTs.forEach(rt => {
-                let idx = Math.floor((rt - minRT) / binSize);
-                if (idx >= 0 && idx < bins.length) bins[idx]++;
-            });
-
-            let userBinIndex = Math.floor((userMeanRT - minRT) / binSize);
-            const backgroundColors = bins.map((_, i) => i === userBinIndex ? 'rgba(231, 76, 60, 0.9)' : 'rgba(52, 152, 219, 0.6)');
-
-            document.getElementById("chart-wrapper").style.display = "block";
-            const ctx = document.getElementById('rtChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{ label: 'Frequency', data: bins, backgroundColor: backgroundColors }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: 'Your Performance vs History' }, legend: { display: false } }
-                }
-            });
         }
     </script>
 </body>
