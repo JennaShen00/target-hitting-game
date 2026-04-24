@@ -522,10 +522,9 @@
                 Distance_Right: trial.dR,
                 Salience_Left: trial.sL,
                 Salience_Right: trial.sR,
-                Condition_Type: computeConditionType(trial.dL, trial.dR, trial.sL, trial.sR),
-                Target_Location_Left: `${trial.leftPos.x},${trial.leftPos.y}`,
-                Target_Location_Right: `${trial.rightPos.x},${trial.rightPos.y}`,
-                Choice_Location: `${event.clientX},${event.clientY}`
+                Target_Location_Left: `${trial.leftPos.x};${trial.leftPos.y}`,
+                Target_Location_Right: `${trial.rightPos.x};${trial.rightPos.y}`,
+                Choice_Location: `${event.clientX};${event.clientY}`
             });
 
             targetLeft.style.display = "none";
