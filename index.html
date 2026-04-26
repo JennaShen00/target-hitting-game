@@ -230,11 +230,11 @@
             </div>
             <div class="input-group">
                 <label>Age:</label>
-                <input type="number" id="age" min="1" max="100">
+                <input type="number" id="age" min="18" max="100" required>
             </div>
             <div class="input-group">
                 <label>Gender:</label>
-                <select id="gender">
+                <select id="gender" required>
                     <option value="">Select Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -245,7 +245,7 @@
             </div>
             <div class="input-group">
                 <label>Handedness:</label>
-                <select id="handedness">
+                <select id="handedness" required>
                     <option value="">Select Handedness</option>
                     <option value="Right">Right-handed</option>
                     <option value="Left">Left-handed</option>
@@ -304,15 +304,25 @@
         const trialCounter = document.getElementById("trial-counter");
 
         startBtn.addEventListener("click", () => {
-            participantId = document.getElementById("participant-id").value.trim() || "P" + Math.random().toString(36).substring(2, 8).toUpperCase();
-            age = document.getElementById("age").value;
-            gender = document.getElementById("gender").value;
-            handedness = document.getElementById("handedness").value;
+            const participantInput = document.getElementById("participant-id");
+            const ageInput = document.getElementById("age");
+            const genderInput = document.getElementById("gender");
+            const handednessInput = document.getElementById("handedness");
+            
+            if (!ageInput.value || !genderInput.value || !handednessInput.value) {
+                alert("Please complete all required questions before starting the experiment.");
+                return;
+            }
+
+            participantId = participantInput.value.trim() || 
+                "P" + Math.random().toString(36).substring(2, 8).toUpperCase();
+            age = ageInput.value;
+            gender = genderInput.value;
+            handedness = handednessInput.value;
 
             generateTrials();
             welcomeScreen.style.display = "none";
             taskScreen.style.display = "block";
-
             setupTaskArea();
             startTrial();
         });
