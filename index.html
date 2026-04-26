@@ -313,6 +313,10 @@
                 alert("Please complete all required questions before starting the experiment.");
                 return;
             }
+            if (Number(ageInput.value) < 18) {
+                alert("To participate in this study, you must be at least 18 years old. Thank you for your understanding.");
+                return;
+            }
 
             participantId = participantInput.value.trim() || 
                 "P" + Math.random().toString(36).substring(2, 8).toUpperCase();
